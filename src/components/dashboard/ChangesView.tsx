@@ -2,9 +2,14 @@ import React, { useState } from 'react'
 import {
   AlertTriangle,
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
   Copy,
   Database,
+  FileCode,
   GitBranch,
+  GitFork,
+  Info,
   Layers,
   Network,
   RefreshCw,
@@ -38,6 +43,11 @@ export const ChangesView: React.FC<ChangesViewProps> = ({
   const [isSimulating, setIsSimulating] = useState<boolean>(false)
   const [simulationStep, setSimulationStep] = useState<number>(0)
   const [showSimulateModal, setShowSimulateModal] = useState<boolean>(false)
+  const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({})
+
+  const toggleCardExpand = (id: string) => {
+    setExpandedCards((prev) => ({ ...prev, [id]: !prev[id] }))
+  }
 
   // Simulation form inputs
   const [simResource, setSimResource] = useState<'postgresql' | 'redis' | 'envoy'>('postgresql')
@@ -767,10 +777,11 @@ export const ChangesView: React.FC<ChangesViewProps> = ({
           </div>
         )}
 
-        {/* Tab 3: Affected Services Table */}
+        {/* Tab 3: Affected Services (Desktop Table + Mobile Responsive Cards) */}
         {activeTab === 'services' && (
           <div className="change-tab-pane">
-            <div className="dash-table-wrapper">
+            {/* Desktop Table View (Hidden on mobile) */}
+            <div className="dash-table-wrapper desktop-only-table">
               <table className="dash-data-table">
                 <thead>
                   <tr>
@@ -816,13 +827,116 @@ export const ChangesView: React.FC<ChangesViewProps> = ({
               </table>
             </div>
 
-            <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end' }}>
+            {/* Mobile Stacked Resource Cards View (Shown on mobile) */}
+            <div className="mobile-resource-cards-list">
+              {scenario.affectedServices.map((svc) => {
+                const isExpanded = !!expandedCards[svc.id]
+                return (
+                  <div key={svc.id} className="mobile-resource-card panel">
+                    {/* Top Row: Service Name, Component, Risk Badge */}
+                    <div className="m-card-header">
+                      <div>
+                        <div className="m-card-title font-semibold text-white">{svc.name}</div>
+                        <span className="mono text-muted text-xs">{svc.component}</span>
+                      </div>
+                      <span
+                        className={`badge ${
+                          svc.risk === 'HIGH'
+                            ? 'badge-risk'
+                            : svc.risk === 'MEDIUM'
+                            ? 'badge-warning'
+                            : 'badge-healthy'
+                        } mono text-xs`}
+                      >
+                        {svc.risk} RISK
+                      </span>
+                    </div>
+
+                    {/* Metadata Row */}
+                    <div className="m-card-meta-row mono text-xs">
+                      <span className="text-secondary">{svc.dependencyType}</span>
+                      <span className="text-muted">·</span>
+                      <span className="text-white">{svc.dependentCallers} rps callers</span>
+                    </div>
+
+                    {/* Primary Failure Reason */}
+                    <p className="m-card-reason text-secondary text-xs">{svc.impactReason}</p>
+
+                    {/* Expandable Secondary Details Accordion Button */}
+                    <button
+                      type="button"
+                      className="m-card-expand-btn mono text-xs"
+                      onClick={() => toggleCardExpand(svc.id)}
+                      aria-expanded={isExpanded}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <Info size={13} className="text-muted" />
+                        <span>{isExpanded ? 'Hide Evidence & Call Path' : 'View Evidence, Path & Diagnostics'}</span>
+                      </div>
+                      {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                    </button>
+
+                    {/* Expanded Content: Evidence, Dependency Path, Assumptions, Diagnostics */}
+                    {isExpanded && (
+                      <div className="m-card-expanded-content panel">
+                        {/* Dependency Path */}
+                        <div className="m-expanded-section">
+                          <div className="m-section-label mono">
+                            <GitFork size={12} />
+                            <span>DEPENDENCY PATH</span>
+                          </div>
+                          <div className="m-path-code mono text-xs">
+                            <span className="text-muted">API Gateway</span>
+                            <span className="m-path-arrow">→</span>
+                            <span className="text-white font-semibold">{svc.name}</span>
+                            <span className="m-path-arrow">→</span>
+                            <span className="text-risk font-semibold">
+                              {scenario.resource} ({scenario.proposedVersion})
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Evidence */}
+                        <div className="m-expanded-section">
+                          <div className="m-section-label mono">
+                            <FileCode size={12} />
+                            <span>EVIDENCE & MANIFEST SPEC</span>
+                          </div>
+                          <div className="m-evidence-text mono text-xs text-secondary">
+                            Client driver specification in {svc.component} references protocol incompatible with target version upgrade.
+                          </div>
+                        </div>
+
+                        {/* Assumptions & Limitations */}
+                        <div className="m-expanded-section">
+                          <div className="m-section-label mono">ASSUMPTIONS & LIMITATIONS</div>
+                          <div className="text-muted mono text-xs">
+                            Traced via Kubernetes manifests & connection pool parameters in prod-us-east-1. Ephemeral connections excluded.
+                          </div>
+                        </div>
+
+                        {/* Diagnostics */}
+                        <div className="m-expanded-section">
+                          <div className="m-section-label mono">DIAGNOSTICS</div>
+                          <div className="m-diag-badge-row mono text-xs">
+                            <span className="badge badge-neutral">AST Check: Validated</span>
+                            <span className="badge badge-risk">Protocol: Incompatible</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+
+            <div className="services-tab-footer" style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end' }}>
               <button
                 type="button"
-                className="btn btn-sm btn-secondary"
+                className="btn btn-sm btn-secondary btn-block-mobile"
                 onClick={onNavigateToServices}
               >
-                <span>Open Dedicated Affected Services Workspace</span>
+                <span>Open Dedicated Resources Workspace →</span>
               </button>
             </div>
           </div>

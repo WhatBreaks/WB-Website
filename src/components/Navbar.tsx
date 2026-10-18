@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { ArrowRight, Menu, X, ExternalLink, Sun, Moon } from 'lucide-react'
 import { useTheme } from '../themeContext'
 
@@ -13,6 +13,29 @@ export const Navbar: React.FC = () => {
       element.scrollIntoView({ behavior: 'smooth' })
     }
   }
+
+  // Handle escape key to close mobile menu
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && mobileMenuOpen) {
+        setMobileMenuOpen(false)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [mobileMenuOpen])
+
+  // Prevent background scrolling when mobile menu is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [mobileMenuOpen])
 
   return (
     <header className="navbar">
@@ -69,19 +92,48 @@ export const Navbar: React.FC = () => {
           </button>
         </div>
 
-        <button
-          type="button"
-          className="mobile-menu-btn"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
-          aria-expanded={mobileMenuOpen}
-        >
-          {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-        </button>
+        {/* Mobile controls: Theme toggle + Hamburger */}
+        <div className="navbar-mobile-actions">
+          <button
+            type="button"
+            className="theme-toggle-btn mobile-header-theme-btn"
+            onClick={toggleTheme}
+            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+          >
+            {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
+          </button>
+
+          <button
+            type="button"
+            className="mobile-menu-btn"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-nav-menu"
+          >
+            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+        </div>
       </div>
 
+      {/* Backdrop overlay for click-outside dismissal */}
       {mobileMenuOpen && (
-        <div className="mobile-menu" role="dialog" aria-modal="true">
+        <div
+          className="mobile-menu-backdrop"
+          onClick={() => setMobileMenuOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      {mobileMenuOpen && (
+        <div
+          id="mobile-nav-menu"
+          className="mobile-menu"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Mobile Navigation"
+        >
           <div className="mobile-menu-links">
             <button type="button" className="mobile-nav-link" onClick={() => scrollToSection('product')}>Product</button>
             <button type="button" className="mobile-nav-link" onClick={() => scrollToSection('change')}>The Change</button>
@@ -90,24 +142,30 @@ export const Navbar: React.FC = () => {
             <button type="button" className="mobile-nav-link" onClick={() => scrollToSection('how-it-works')}>How it works</button>
             <button type="button" className="mobile-nav-link" onClick={() => scrollToSection('cli')}>CLI</button>
             <button type="button" className="mobile-nav-link" onClick={() => scrollToSection('kubernetes')}>Kubernetes (V1 Available Now)</button>
-            <a href="https://github.com/aaradhychinche-alt/WhatBreaks" target="_blank" rel="noopener noreferrer" className="mobile-nav-link">
-              GitHub ↗
+            <a
+              href="https://github.com/aaradhychinche-alt/WhatBreaks"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mobile-nav-link"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <span>GitHub</span>
+              <ExternalLink size={14} className="external-icon" style={{ marginLeft: 6 }} />
             </a>
           </div>
           <div className="mobile-menu-footer">
             <button
               type="button"
-              className="btn btn-secondary"
-              style={{ width: '100%', marginBottom: '10px' }}
+              className="btn btn-secondary mobile-menu-theme-btn"
               onClick={toggleTheme}
             >
-              {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
+              {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
               <span>{theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}</span>
             </button>
             <button
               type="button"
               className="btn btn-primary"
-              style={{ width: '100%' }}
+              style={{ width: '100%', minHeight: '44px' }}
               onClick={() => scrollToSection('dashboard')}
             >
               <span>Try WhatBreaks</span>

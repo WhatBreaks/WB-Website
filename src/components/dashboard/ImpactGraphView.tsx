@@ -3,9 +3,11 @@ import {
   ZoomIn,
   ZoomOut,
   Maximize2,
+  Minimize2,
   RotateCcw,
   Filter,
   Layers,
+  List,
   ShieldAlert,
   AlertTriangle,
   CheckCircle2,
@@ -52,6 +54,8 @@ export const ImpactGraphView: React.FC<ImpactGraphViewProps> = ({
   onSelectScenario,
   onInspectService
 }) => {
+  const [viewFormat, setViewFormat] = useState<'graph' | 'list'>('graph')
+  const [isExpandedFullscreen, setIsExpandedFullscreen] = useState<boolean>(false)
   const [zoom, setZoom] = useState<number>(1)
   const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState<boolean>(false)
@@ -432,7 +436,7 @@ export const ImpactGraphView: React.FC<ImpactGraphViewProps> = ({
     return set
   }, [selectedNodeId, edges])
 
-  // Dragging handlers for canvas pan
+  // Dragging handlers for canvas pan (Mouse and Touch)
   const handleMouseDown = (e: React.MouseEvent) => {
     if (e.target === containerRef.current || (e.target as HTMLElement).tagName === 'svg') {
       setIsDragging(true)
@@ -447,6 +451,25 @@ export const ImpactGraphView: React.FC<ImpactGraphViewProps> = ({
   }
 
   const handleMouseUp = () => {
+    setIsDragging(false)
+  }
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      const touch = e.touches[0]
+      setIsDragging(true)
+      setDragStart({ x: touch.clientX - pan.x, y: touch.clientY - pan.y })
+    }
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (isDragging && e.touches.length === 1) {
+      const touch = e.touches[0]
+      setPan({ x: touch.clientX - dragStart.x, y: touch.clientY - dragStart.y })
+    }
+  }
+
+  const handleTouchEnd = () => {
     setIsDragging(false)
   }
 
@@ -585,6 +608,26 @@ export const ImpactGraphView: React.FC<ImpactGraphViewProps> = ({
           </button>
         </div>
 
+        {/* Center-Right: View Mode & Fullscreen */}
+        <div className="graph-toolbar-group graph-view-toggle-group">
+          <button
+            type="button"
+            className={`toolbar-btn ${viewFormat === 'graph' ? 'toolbar-btn-active' : ''}`}
+            onClick={() => setViewFormat('graph')}
+          >
+            <Layers size={12} />
+            <span>Graph Canvas</span>
+          </button>
+          <button
+            type="button"
+            className={`toolbar-btn ${viewFormat === 'list' ? 'toolbar-btn-active' : ''}`}
+            onClick={() => setViewFormat('list')}
+          >
+            <List size={12} />
+            <span>Dependency List</span>
+          </button>
+        </div>
+
         {/* Right: Zoom / Pan Controls */}
         <div className="graph-toolbar-group graph-controls-right">
           <button
@@ -620,18 +663,139 @@ export const ImpactGraphView: React.FC<ImpactGraphViewProps> = ({
           >
             <RotateCcw size={14} />
           </button>
+          <button
+            type="button"
+            className={`toolbar-icon-btn ${isExpandedFullscreen ? 'toolbar-btn-active' : ''}`}
+            title={isExpandedFullscreen ? "Exit Fullscreen Mode" : "Expand Graph Fullscreen"}
+            onClick={() => setIsExpandedFullscreen(!isExpandedFullscreen)}
+            aria-label={isExpandedFullscreen ? "Exit Fullscreen" : "Expand Fullscreen"}
+          >
+            {isExpandedFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+          </button>
         </div>
       </div>
 
-      {/* Main Interactive Canvas Area */}
-      <div
-        className="graph-canvas-container"
-        ref={containerRef}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
-      >
+      {viewFormat === 'list' ? (
+        /* Accessible Dependency List / Table Alternative */
+        <div className="dependency-list-view panel">
+          <div className="dep-list-header">
+            <div className="mono text-xs text-muted">TOPOLOGY DEPENDENCY INVENTORY & CONNECTIONS</div>
+            <p className="text-secondary text-xs" style={{ margin: '4px 0 0 0' }}>
+              Explore relationships directly across production microservices. Tap any resource to inspect immediate callers and downstream dependencies.
+            </p>
+          </div>
+
+          <div className="dep-nodes-grid">
+            {nodes.map((n) => {
+              const isSelected = selectedNodeId === n.id
+              const incomingEdges = visibleEdges.filter((e) => e.target === n.id)
+              const outgoingEdges = visibleEdges.filter((e) => e.source === n.id)
+              return (
+                <div
+                  key={n.id}
+                  className={`dep-node-card panel ${isSelected ? 'dep-card-selected' : ''}`}
+                  onClick={() => setSelectedNodeId(n.id)}
+                >
+                  <div className="dep-card-top">
+                    <div>
+                      <div className="dep-node-name font-semibold text-white">{n.name}</div>
+                      <div className="mono text-muted text-xs">
+                        {n.version} · {n.type.toUpperCase()} · Tier {n.tier}
+                      </div>
+                    </div>
+                    <span
+                      className={`badge ${
+                        n.status === 'risk'
+                          ? 'badge-risk'
+                          : n.status === 'warning'
+                          ? 'badge-warning'
+                          : 'badge-healthy'
+                      } mono text-xs`}
+                    >
+                      {n.status.toUpperCase()}
+                    </span>
+                  </div>
+
+                  <p className="text-secondary text-xs" style={{ margin: '8px 0' }}>
+                    {n.description}
+                  </p>
+
+                  <div className="dep-connections-block mono text-xs">
+                    <div className="dep-conn-row">
+                      <span className="text-muted">UPSTREAM CALLERS ({incomingEdges.length}):</span>
+                      <span className="text-white" style={{ marginLeft: 6 }}>
+                        {incomingEdges.length > 0
+                          ? incomingEdges
+                              .map((e) => nodes.find((x) => x.id === e.source)?.name || e.source)
+                              .join(', ')
+                          : 'Edge Ingress Entry'}
+                      </span>
+                    </div>
+                    <div className="dep-conn-row" style={{ marginTop: '4px' }}>
+                      <span className="text-muted">DOWNSTREAM TARGETS ({outgoingEdges.length}):</span>
+                      <span className="text-white" style={{ marginLeft: 6 }}>
+                        {outgoingEdges.length > 0
+                          ? outgoingEdges
+                              .map((e) => nodes.find((x) => x.id === e.target)?.name || e.target)
+                              .join(', ')
+                          : 'Terminal Storage Node'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="dep-card-actions">
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm flex-1"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setSelectedNodeId(n.id)
+                        setViewFormat('graph')
+                      }}
+                    >
+                      <span>Locate on Graph</span>
+                    </button>
+                    {onInspectService && (
+                      <button
+                        type="button"
+                        className="btn btn-primary btn-sm flex-1"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onInspectService(n.id)
+                        }}
+                      >
+                        <span>Inspect Resource</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      ) : (
+        /* Main Interactive Canvas Area */
+        <div
+          className={`graph-canvas-container ${isExpandedFullscreen ? 'graph-fullscreen-mobile' : ''}`}
+          ref={containerRef}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+        >
+          {isExpandedFullscreen && (
+            <button
+              type="button"
+              className="exit-fullscreen-btn mono"
+              onClick={() => setIsExpandedFullscreen(false)}
+            >
+              <Minimize2 size={13} />
+              <span>Exit Fullscreen</span>
+            </button>
+          )}
         {/* Background Grid Lines Pattern */}
         <div className="graph-grid-backdrop" />
 
@@ -1218,7 +1382,20 @@ export const ImpactGraphView: React.FC<ImpactGraphViewProps> = ({
             )}
           </div>
         )}
+
+        {/* Mobile Inspection Drawer Backdrop */}
+        {(activeNode || activeEdge) && (
+          <div
+            className="mobile-inspector-backdrop"
+            onClick={() => {
+              setSelectedNodeId(null)
+              setSelectedEdgeId(null)
+            }}
+            aria-hidden="true"
+          />
+        )}
       </div>
+      )}
     </div>
   )
 }

@@ -30,9 +30,11 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
 
   // Structured form inputs
   const [resource, setResource] = useState('PostgreSQL')
+  const [changeType, setChangeType] = useState<'version' | 'config' | 'replicas' | 'schema'>('version')
   const [currentVersion, setCurrentVersion] = useState('15.4')
   const [proposedVersion, setProposedVersion] = useState('16.1')
   const [environment, setEnvironment] = useState('Production')
+  const [optionalDetails, setOptionalDetails] = useState('connectionTimeoutMillis: 5000\nsslmode: verify-full\nmax_connections: 500')
 
   // Live Analysis progress simulation state
   const [isAnalyzing, setIsAnalyzing] = useState(false)
@@ -211,73 +213,169 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
             </div>
           </div>
         ) : (
-          /* Structured Input Spec */
-          <div className="structured-input-box">
-            <div className="structured-fields-grid">
-              <div className="form-field">
-                <label className="form-label mono">TARGET RESOURCE</label>
+          /* Structured Input Spec: Clear 4-Step Vertical Workflow */
+          <div className="structured-input-box investigate-workflow-container">
+            {/* Step 1: Target Resource Selector */}
+            <div className="investigate-step-card">
+              <div className="investigate-step-header">
+                <span className="step-badge mono">STEP 01</span>
+                <label className="form-label mono" htmlFor="target-resource-select">
+                  TARGET RESOURCE
+                </label>
+              </div>
+              <div className="investigate-select-wrap">
                 <select
+                  id="target-resource-select"
                   className="form-select mono"
                   value={resource}
                   onChange={(e) => {
-                    setResource(e.target.value)
-                    if (e.target.value === 'PostgreSQL') {
+                    const val = e.target.value
+                    setResource(val)
+                    if (val === 'PostgreSQL') {
                       setCurrentVersion('15.4')
                       setProposedVersion('16.1')
-                    } else if (e.target.value === 'Redis') {
+                    } else if (val === 'Redis') {
                       setCurrentVersion('6.2')
                       setProposedVersion('7.2')
-                    } else if (e.target.value === 'API Gateway') {
+                    } else if (val === 'API Gateway') {
                       setCurrentVersion('1.27')
                       setProposedVersion('1.28')
+                    } else {
+                      setCurrentVersion('3.12')
+                      setProposedVersion('3.13')
                     }
                   }}
                 >
-                  <option value="PostgreSQL">PostgreSQL (Aurora RDS Primary)</option>
-                  <option value="Redis">Redis (Session & Cache Cluster)</option>
-                  <option value="API Gateway">API Gateway (Envoy Ingress)</option>
-                  <option value="RabbitMQ">RabbitMQ (Event Broker)</option>
+                  <option value="PostgreSQL">PostgreSQL (Aurora RDS Primary Cluster)</option>
+                  <option value="Redis">Redis (Session & Rate Limit Cluster)</option>
+                  <option value="API Gateway">API Gateway (Envoy Edge Ingress)</option>
+                  <option value="RabbitMQ">RabbitMQ (Event Broker Cluster)</option>
                 </select>
               </div>
-
-              <div className="form-field">
-                <label className="form-label mono">CURRENT VERSION</label>
-                <input
-                  type="text"
-                  className="form-input mono"
-                  value={currentVersion}
-                  onChange={(e) => setCurrentVersion(e.target.value)}
-                />
-              </div>
-
-              <div className="form-field">
-                <label className="form-label mono">PROPOSED VERSION</label>
-                <input
-                  type="text"
-                  className="form-input mono"
-                  value={proposedVersion}
-                  onChange={(e) => setProposedVersion(e.target.value)}
-                />
-              </div>
-
-              <div className="form-field">
-                <label className="form-label mono">ENVIRONMENT</label>
-                <select
-                  className="form-select mono"
-                  value={environment}
-                  onChange={(e) => setEnvironment(e.target.value)}
-                >
-                  <option value="Production">Production (Strict Verification)</option>
-                  <option value="Staging">Staging</option>
-                  <option value="Development">Development</option>
-                </select>
+              <div className="resource-id-meta mono text-xs text-muted">
+                IDENTIFIER:{' '}
+                <span className="text-secondary">
+                  {resource === 'PostgreSQL'
+                    ? 'aurora-pg-cluster.c7z9.rds.amazonaws.com (Namespace: databases/prod)'
+                    : resource === 'Redis'
+                    ? 'elasticache-redis.cache.amazonaws.com (Namespace: caches/prod)'
+                    : resource === 'API Gateway'
+                    ? 'envoy-ingress.networking.k8s.io (Namespace: ingress-edge)'
+                    : 'rabbitmq-cluster.amqp.internal (Namespace: messaging/prod)'}
+                </span>
               </div>
             </div>
 
-            <div className="structured-actions-row">
+            {/* Step 2: Proposed Change Selector */}
+            <div className="investigate-step-card">
+              <div className="investigate-step-header">
+                <span className="step-badge mono">STEP 02</span>
+                <label className="form-label mono">PROPOSED CHANGE TYPE</label>
+              </div>
+
+              {/* Change Type Selector Options */}
+              <div className="change-type-pills-row">
+                <button
+                  type="button"
+                  className={`change-type-pill mono ${changeType === 'version' ? 'change-type-pill-active' : ''}`}
+                  onClick={() => setChangeType('version')}
+                >
+                  <span className="pill-dot" />
+                  <span>Version Upgrade</span>
+                </button>
+                <button
+                  type="button"
+                  className={`change-type-pill mono ${changeType === 'config' ? 'change-type-pill-active' : ''}`}
+                  onClick={() => setChangeType('config')}
+                >
+                  <span className="pill-dot" />
+                  <span>Config Update</span>
+                </button>
+                <button
+                  type="button"
+                  className={`change-type-pill mono ${changeType === 'replicas' ? 'change-type-pill-active' : ''}`}
+                  onClick={() => setChangeType('replicas')}
+                >
+                  <span className="pill-dot" />
+                  <span>Replica Scaling</span>
+                </button>
+                <button
+                  type="button"
+                  className={`change-type-pill mono ${changeType === 'schema' ? 'change-type-pill-active' : ''}`}
+                  onClick={() => setChangeType('schema')}
+                >
+                  <span className="pill-dot" />
+                  <span>Schema Migration</span>
+                </button>
+              </div>
+
+              {/* Version & Environment Inputs */}
+              <div className="change-specs-vertical-grid">
+                <div className="change-version-pair">
+                  <div className="form-field flex-1">
+                    <label className="sub-field-label mono">CURRENT PRODUCTION VERSION</label>
+                    <input
+                      type="text"
+                      className="form-input mono"
+                      value={currentVersion}
+                      onChange={(e) => setCurrentVersion(e.target.value)}
+                      placeholder="e.g. 15.4"
+                    />
+                  </div>
+                  <div className="version-arrow-divider mono">→</div>
+                  <div className="form-field flex-1">
+                    <label className="sub-field-label mono">PROPOSED TARGET VERSION</label>
+                    <input
+                      type="text"
+                      className="form-input mono"
+                      value={proposedVersion}
+                      onChange={(e) => setProposedVersion(e.target.value)}
+                      placeholder="e.g. 16.1"
+                    />
+                  </div>
+                </div>
+
+                <div className="form-field">
+                  <label className="sub-field-label mono">TARGET ENVIRONMENT</label>
+                  <select
+                    className="form-select mono"
+                    value={environment}
+                    onChange={(e) => setEnvironment(e.target.value)}
+                  >
+                    <option value="Production">Production (Strict Blast Radius Verification)</option>
+                    <option value="Staging">Staging (Pre-release Validation)</option>
+                    <option value="Development">Development (Sandbox Verification)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Step 3: Optional Change Details / Manifest Diff */}
+            <div className="investigate-step-card">
+              <div className="investigate-step-header">
+                <span className="step-badge mono">STEP 03</span>
+                <label className="form-label mono" htmlFor="optional-change-details">
+                  OPTIONAL CHANGE DETAILS & CONFIGURATION
+                </label>
+              </div>
+              <textarea
+                id="optional-change-details"
+                className="form-textarea mono"
+                rows={3}
+                placeholder="e.g. connectionTimeoutMillis: 5000&#10;sslmode: verify-full&#10;max_connections: 500"
+                value={optionalDetails}
+                onChange={(e) => setOptionalDetails(e.target.value)}
+              />
+              <div className="text-muted mono text-xs" style={{ marginTop: '4px' }}>
+                Optional: Supply manifest overrides, driver settings, or connection pool parameters for AST conflict detection.
+              </div>
+            </div>
+
+            {/* Step 4: Full-width Analyze Impact Button */}
+            <div className="investigate-step-card investigate-action-card">
               <button
                 type="button"
-                className="btn btn-primary"
+                className="btn btn-primary btn-block analyze-submit-btn-workflow"
                 onClick={() => {
                   const key =
                     resource === 'Redis'
@@ -291,25 +389,35 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
               >
                 {isAnalyzing ? (
                   <>
-                    <RefreshCw size={14} className="spin" />
-                    <span>Evaluating Topology...</span>
+                    <RefreshCw size={16} className="spin" />
+                    <span>Evaluating Downstream Topology & Dependencies...</span>
                   </>
                 ) : (
                   <>
-                    <span>Analyze Change</span>
-                    <ArrowRight size={14} />
+                    <span>Run Impact Analysis</span>
+                    <ArrowRight size={16} />
                   </>
                 )}
               </button>
 
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => onNavigate('graph')}
-              >
-                <Network size={14} />
-                <span>Select from graph instead</span>
-              </button>
+              <div className="investigate-alt-actions">
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => onNavigate('graph')}
+                >
+                  <Network size={13} />
+                  <span>Select from Topology Graph</span>
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => onNavigate('services')}
+                >
+                  <Server size={13} />
+                  <span>Browse Resource Catalog</span>
+                </button>
+              </div>
             </div>
           </div>
         )}

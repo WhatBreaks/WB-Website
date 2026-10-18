@@ -15,6 +15,7 @@ interface AffectedServicesViewProps {
   selectedScenarioKey: string
   onSelectScenario: (scenarioKey: string) => void
   onNavigateToGraph: (serviceId?: string) => void
+  onInvestigate?: (resourceName: string) => void
   initialSelectedServiceId?: string | null
 }
 
@@ -40,6 +41,7 @@ export const AffectedServicesView: React.FC<AffectedServicesViewProps> = ({
   selectedScenarioKey,
   onSelectScenario,
   onNavigateToGraph,
+  onInvestigate,
   initialSelectedServiceId
 }) => {
   const scenario = SCENARIOS[selectedScenarioKey] || SCENARIOS['pg-15-16']
@@ -392,8 +394,8 @@ export const AffectedServicesView: React.FC<AffectedServicesViewProps> = ({
             </div>
           </div>
 
-          {/* Professional Table */}
-          <div className="table-responsive">
+          {/* Desktop Table (Visible on Desktop) */}
+          <div className="table-responsive desktop-services-table">
             <table className="affected-services-table">
               <thead>
                 <tr>
@@ -466,8 +468,6 @@ export const AffectedServicesView: React.FC<AffectedServicesViewProps> = ({
                               ? 'status-impacted'
                               : svc.status === 'Warning'
                               ? 'status-warning'
-                              : svc.status === 'Degraded'
-                              ? 'status-degraded'
                               : 'status-low'
                           }`}
                         >
@@ -494,6 +494,73 @@ export const AffectedServicesView: React.FC<AffectedServicesViewProps> = ({
             </table>
           </div>
 
+          {/* Mobile Stacked Resource Cards View (Visible on Mobile) */}
+          <div className="mobile-services-cards-list">
+            {filteredServices.map((svc) => {
+              const isSelected = selectedServiceId === svc.id
+              return (
+                <div
+                  key={svc.id}
+                  className={`mobile-resource-card panel ${isSelected ? 'm-card-selected' : ''}`}
+                >
+                  <div className="m-card-header">
+                    <div>
+                      <div className="m-card-title font-semibold text-white">{svc.name}</div>
+                      <div className="mono text-muted text-xs">
+                        {svc.runtime} · {svc.version}
+                      </div>
+                      <div className="mono text-muted text-xs" style={{ marginTop: '2px', wordBreak: 'break-all' }}>
+                        prod-us-east-1 / {svc.name.toLowerCase().replace(/\s+/g, '-')}
+                      </div>
+                    </div>
+                    <span
+                      className={`badge ${
+                        svc.risk === 'HIGH'
+                          ? 'badge-risk'
+                          : svc.risk === 'MEDIUM'
+                          ? 'badge-warning'
+                          : 'badge-healthy'
+                      } mono text-xs`}
+                    >
+                      {svc.risk} RISK
+                    </span>
+                  </div>
+
+                  <div className="m-card-meta-row mono text-xs">
+                    <span className="text-secondary">{svc.relation}</span>
+                    <span className="text-muted">·</span>
+                    <span className="text-white">{svc.traffic}</span>
+                  </div>
+
+                  <p className="m-card-reason text-secondary text-xs">{svc.potentialFailure}</p>
+
+                  <div className="mobile-card-actions-row">
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-sm flex-1"
+                      onClick={() => {
+                        if (onInvestigate) {
+                          onInvestigate(svc.name)
+                        } else {
+                          onNavigateToGraph(svc.id)
+                        }
+                      }}
+                    >
+                      <span>Investigate Resource</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm flex-1"
+                      onClick={() => setSelectedServiceId(svc.id)}
+                    >
+                      <span>Inspect Details</span>
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
           {filteredServices.length === 0 && (
             <div className="table-empty-state">
               <p className="text-muted mono">No services match the active filter criteria.</p>
@@ -510,6 +577,15 @@ export const AffectedServicesView: React.FC<AffectedServicesViewProps> = ({
             </div>
           )}
         </div>
+
+        {/* Mobile Inspection Drawer Backdrop */}
+        {inspectedService && (
+          <div
+            className="mobile-inspection-backdrop"
+            onClick={() => setSelectedServiceId(null)}
+            aria-hidden="true"
+          />
+        )}
 
         {/* Right: Service Inspection Drawer */}
         {inspectedService && (

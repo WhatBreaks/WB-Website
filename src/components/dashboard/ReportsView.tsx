@@ -1,13 +1,19 @@
 import React, { useState } from 'react'
 import {
+  Activity,
   AlertTriangle,
   ArrowDownToLine,
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  Cpu,
   FileCheck,
   FileText,
+  RefreshCw,
   Search,
   ShieldAlert,
   Sliders,
+  Terminal,
   X
 } from 'lucide-react'
 
@@ -44,6 +50,19 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
   const [filterRisk, setFilterRisk] = useState<'ALL' | 'HIGH' | 'MEDIUM' | 'LOW'>('ALL')
   const [searchQuery, setSearchQuery] = useState('')
   const [downloadSuccessMessage, setDownloadSuccessMessage] = useState<string | null>(null)
+  const [isRunningDiagnostic, setIsRunningDiagnostic] = useState(false)
+  const [diagnosticPassed, setDiagnosticPassed] = useState<boolean | null>(null)
+  const [showLogs, setShowLogs] = useState(false)
+
+  const handleRunDiagnostic = () => {
+    setIsRunningDiagnostic(true)
+    setDiagnosticPassed(null)
+    setTimeout(() => {
+      setIsRunningDiagnostic(false)
+      setDiagnosticPassed(true)
+      setTimeout(() => setDiagnosticPassed(null), 4000)
+    }, 1500)
+  }
 
   const reports: AuditReport[] = [
     {
@@ -192,18 +211,17 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
 
   return (
     <div className="reports-workspace-root">
-      {/* Header */}
+      {/* Workspace Header */}
       <div className="reports-page-header">
         <div className="reports-header-text">
           <div className="reports-eyebrow mono">
-            <span>AUDIT & GOVERNANCE</span>
+            <span>PLATFORM HEALTH & AUDIT</span>
             <span className="dot-divider">/</span>
             <span>CLUSTER: prod-us-east-1</span>
           </div>
-          <h2 className="reports-title">Analysis reports</h2>
+          <h2 className="reports-title">System Health & Reports</h2>
           <p className="reports-subtitle">
-            Formal blast-radius audit records and pre-deployment impact analyses.
-            Download audit evidence for compliance, CI/CD gates, and engineering post-mortems.
+            Real-time cluster synchronization, topology health status, automated diagnostics, and pre-deployment audit reports.
           </p>
         </div>
 
@@ -214,6 +232,117 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
           </div>
         )}
       </div>
+
+      {/* 1. Real-time Cluster Health & Component Status Panel */}
+      <section className="system-health-panel panel">
+        <div className="health-panel-top">
+          <div className="flex items-center gap-2">
+            <Activity size={16} className="text-healthy" />
+            <span className="mono font-semibold text-white text-sm">CLUSTER COMPONENT HEALTH</span>
+          </div>
+          <div className="health-sync-badge mono text-xs">
+            <span className="dot dot-healthy" />
+            <span>SYNCED (v1.28.4 · 2m ago)</span>
+          </div>
+        </div>
+
+        {/* 4 Diagnostic Health Indicators (Stacked vertically on mobile, grid on desktop) */}
+        <div className="health-indicators-grid">
+          <div className="health-indicator-card panel">
+            <div className="indicator-header">
+              <span className="indicator-title mono text-xs">KUBE API SERVER</span>
+              <span className="badge badge-healthy mono text-xs">HEALTHY</span>
+            </div>
+            <div className="indicator-main font-semibold text-white text-sm">v1.28.4 Connected</div>
+            <div className="indicator-sub mono text-muted text-xs">Latency: 12ms · 0 sync failures</div>
+          </div>
+
+          <div className="health-indicator-card panel">
+            <div className="indicator-header">
+              <span className="indicator-title mono text-xs">GRAPH ENGINE</span>
+              <span className="badge badge-healthy mono text-xs">OPERATIONAL</span>
+            </div>
+            <div className="indicator-main font-semibold text-white text-sm">731 Topology Edges</div>
+            <div className="indicator-sub mono text-muted text-xs">Traversal: 0.4ms · 184 nodes</div>
+          </div>
+
+          <div className="health-indicator-card panel">
+            <div className="indicator-header">
+              <span className="indicator-title mono text-xs">MANIFEST AST PARSER</span>
+              <span className="badge badge-healthy mono text-xs">READY</span>
+            </div>
+            <div className="indicator-main font-semibold text-white text-sm">Helm & Kustomize</div>
+            <div className="indicator-sub mono text-muted text-xs">0 schema parsing errors</div>
+          </div>
+
+          <div className="health-indicator-card panel">
+            <div className="indicator-header">
+              <span className="indicator-title mono text-xs">ACTIVE WARNINGS</span>
+              <span className="badge badge-warning mono text-xs">1 DETECTED</span>
+            </div>
+            <div className="indicator-main font-semibold text-warning text-sm">Auth SCRAM Protocol</div>
+            <div className="indicator-sub mono text-muted text-xs">pg@8.7.1 incompatible with PG 16</div>
+          </div>
+        </div>
+
+        {/* Diagnostics Trigger & Logs Toggle (Full-width buttons on mobile) */}
+        <div className="health-actions-bar">
+          <button
+            type="button"
+            className="btn btn-primary btn-sm btn-block-mobile"
+            onClick={handleRunDiagnostic}
+            disabled={isRunningDiagnostic}
+          >
+            {isRunningDiagnostic ? (
+              <>
+                <RefreshCw size={14} className="spin" />
+                <span>Running Cluster Health Diagnostic...</span>
+              </>
+            ) : (
+              <>
+                <Cpu size={14} />
+                <span>Run Full Cluster Diagnostic</span>
+              </>
+            )}
+          </button>
+
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm btn-block-mobile"
+            onClick={() => setShowLogs(!showLogs)}
+            aria-expanded={showLogs}
+          >
+            <Terminal size={14} />
+            <span>{showLogs ? 'Hide Diagnostic Console Logs' : 'View Diagnostic Console Logs'}</span>
+            {showLogs ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          </button>
+        </div>
+
+        {/* Diagnostic Run Success Toast */}
+        {diagnosticPassed && (
+          <div className="diagnostic-passed-banner panel mono text-xs">
+            <CheckCircle2 size={14} className="text-healthy" />
+            <span>Diagnostic complete: 4/4 subsystems healthy. 0 cluster unreachable faults.</span>
+          </div>
+        )}
+
+        {/* Collapsible Diagnostic Console Logs */}
+        {showLogs && (
+          <div className="diagnostic-logs-drawer panel">
+            <div className="logs-header mono text-xs text-muted">
+              <span>DIAGNOSTIC CONSOLE LOGS · prod-us-east-1</span>
+              <span>BUFFER: 5/5 OK</span>
+            </div>
+            <pre className="diagnostic-logs-pre mono text-xs">
+{`[2026-10-18 21:40:02 UTC] [INFO] kube-client: Connected to API server https://kubernetes.default.svc:443 (v1.28.4)
+[2026-10-18 21:40:04 UTC] [INFO] graph-engine: Ingested 184 resources from namespace ingress-edge, services, databases
+[2026-10-18 21:40:07 UTC] [INFO] graph-engine: Computed DAG with 731 directed edges in 0.42ms
+[2026-10-18 21:40:11 UTC] [WARN] ast-validator: Node "auth-service" driver "pg@8.7.1" lacks SCRAM channel binding for PostgreSQL 16
+[2026-10-18 21:40:15 UTC] [INFO] health-daemon: Subsystems operational; readiness probe returning HTTP 200`}
+            </pre>
+          </div>
+        )}
+      </section>
 
       {/* Top Metrics Row */}
       <div className="reports-metrics-row">

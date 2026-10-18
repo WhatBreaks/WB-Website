@@ -23,8 +23,10 @@ interface NodeScreenPos {
 
 export const HeroDependencySimulation: React.FC = () => {
   const mountRef = useRef<HTMLDivElement>(null)
+  const canvasContainerRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const sceneRef = useRef<THREE.Scene | null>(null)
+  const dimsRef = useRef<{ w: number; h: number }>({ w: 0, h: 0 })
   const { theme } = useTheme()
   const themeRef = useRef(theme)
 
@@ -107,21 +109,24 @@ export const HeroDependencySimulation: React.FC = () => {
   // Three.js scene setup
   useEffect(() => {
     const canvas = canvasRef.current
-    const container = mountRef.current
+    const container = canvasContainerRef.current
     if (!canvas || !container) return
 
-    const width = container.clientWidth
-    const height = container.clientHeight
+    const initialW = container.clientWidth || 300
+    const initialH = container.clientHeight || 300
+    dimsRef.current = { w: initialW, h: initialH }
 
     // Scene
     const scene = new THREE.Scene()
     scene.background = new THREE.Color(themeRef.current === 'dark' ? 0x202020 : 0xE9E8E2)
     sceneRef.current = scene
 
-    // Camera with subtle perspective
-    const camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 100)
-    camera.position.set(0, -0.2, 8.5)
-    camera.lookAt(0, -0.1, 0)
+    // Camera with subtle perspective, adapting distance for narrow mobile viewports
+    const initialAspect = initialW / (initialH || 1)
+    const initialZ = initialAspect < 1.2 ? Math.max(8.5, 9.8 / initialAspect) : 8.5
+    const camera = new THREE.PerspectiveCamera(38, initialAspect, 0.1, 100)
+    camera.position.set(0, -0.05, initialZ)
+    camera.lookAt(0, -0.05, 0)
 
     // Renderer
     const renderer = new THREE.WebGLRenderer({
@@ -130,7 +135,7 @@ export const HeroDependencySimulation: React.FC = () => {
       alpha: false,
       powerPreference: 'high-performance'
     })
-    renderer.setSize(width, height)
+    renderer.setSize(initialW, initialH, false)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
     // Subtle lighting - minimal, architectural studio setup
@@ -334,12 +339,16 @@ export const HeroDependencySimulation: React.FC = () => {
         setPhaseProgress(nextProg)
       }
 
+      const curW = dimsRef.current.w || container.clientWidth
+      const curH = dimsRef.current.h || container.clientHeight
+      const curAsp = curW / (curH || 1)
+
       // Very subtle calm camera sway (smooth perspective micro-movement, no dramatic spin)
-      const swayX = Math.sin(totalTime * 0.2) * 0.22
-      const swayY = Math.cos(totalTime * 0.15) * 0.12 - 0.2
+      const swayX = Math.sin(totalTime * 0.2) * (curAsp < 1.2 ? 0.06 : 0.2)
+      const swayY = Math.cos(totalTime * 0.15) * (curAsp < 1.2 ? 0.05 : 0.08) - 0.05
       camera.position.x = swayX
       camera.position.y = swayY
-      camera.lookAt(0, -0.1, 0)
+      camera.lookAt(0, -0.05, 0)
 
       // Raycasting for hover detection
       raycaster.setFromCamera(mouseNormRef.current, camera)
@@ -464,6 +473,7 @@ export const HeroDependencySimulation: React.FC = () => {
       })
 
       // Project 3D node coordinates to 2D screen coordinates for crisp typography overlay
+      // using dynamic real-time container dimensions so labels are 100% synchronized
       const newScreenPos: Record<string, NodeScreenPos> = {}
       HERO_NODES.forEach((node) => {
         const group = nodeMeshes.get(node.id)
@@ -471,8 +481,8 @@ export const HeroDependencySimulation: React.FC = () => {
         const worldPos = group.position.clone()
         worldPos.project(camera)
 
-        const sx = ((worldPos.x + 1) * width) / 2
-        const sy = ((-worldPos.y + 1) * height) / 2
+        const sx = ((worldPos.x + 1) * curW) / 2
+        const sy = ((-worldPos.y + 1) * curH) / 2
         newScreenPos[node.id] = {
           id: node.id,
           x: sx,
@@ -487,28 +497,46 @@ export const HeroDependencySimulation: React.FC = () => {
 
     animate()
 
-    // Resize listener
+    // Robust resize handler with responsive camera distance
     const handleResize = () => {
-      if (!container) return
+      if (!container || !canvas) return
       const w = container.clientWidth
       const h = container.clientHeight
-      camera.aspect = w / h
+      if (w === 0 || h === 0) return
+
+      dimsRef.current = { w, h }
+      const asp = w / h
+      camera.aspect = asp
+      camera.position.z = asp < 1.2 ? Math.max(8.5, 9.8 / asp) : 8.5
       camera.updateProjectionMatrix()
-      renderer.setSize(w, h)
+      renderer.setSize(w, h, false)
+    }
+
+    // Direct ResizeObserver on canvas container for instant response to viewport & grid changes
+    let resizeObserver: ResizeObserver | null = null
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(() => {
+        handleResize()
+      })
+      resizeObserver.observe(container)
     }
 
     window.addEventListener('resize', handleResize)
+    requestAnimationFrame(handleResize)
 
     return () => {
       cancelAnimationFrame(animId)
       window.removeEventListener('resize', handleResize)
+      if (resizeObserver) {
+        resizeObserver.disconnect()
+      }
       renderer.dispose()
     }
   }, [nodesMap, isDirectlyAffected, isIndirectlyAffected])
 
-  // Mouse move handler for raycaster
+  // Mouse move handler for raycaster mapped precisely to canvas container
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const container = mountRef.current
+    const container = canvasContainerRef.current
     if (!container) return
     const rect = container.getBoundingClientRect()
     const x = e.clientX - rect.left
@@ -517,6 +545,26 @@ export const HeroDependencySimulation: React.FC = () => {
     mousePosRef.current = { x, y }
     mouseNormRef.current.x = (x / rect.width) * 2 - 1
     mouseNormRef.current.y = -(y / rect.height) * 2 + 1
+  }
+
+  // Touch move handler for mobile devices
+  const handleTouch = (e: React.TouchEvent<HTMLDivElement>) => {
+    const container = canvasContainerRef.current
+    if (!container || !e.touches[0]) return
+    const rect = container.getBoundingClientRect()
+    const touch = e.touches[0]
+    const x = touch.clientX - rect.left
+    const y = touch.clientY - rect.top
+
+    mousePosRef.current = { x, y }
+    mouseNormRef.current.x = (x / rect.width) * 2 - 1
+    mouseNormRef.current.y = -(y / rect.height) * 2 + 1
+  }
+
+  const handleTouchEnd = () => {
+    if (hoveredNodeId) {
+      setSelectedNodeId(hoveredNodeId)
+    }
   }
 
   const handleMouseLeave = () => {
@@ -534,13 +582,7 @@ export const HeroDependencySimulation: React.FC = () => {
   const activeNode = selectedNodeId ? nodesMap.get(selectedNodeId) : (hoveredNodeId ? nodesMap.get(hoveredNodeId) : null)
 
   return (
-    <div
-      className="hero-simulation-wrapper"
-      ref={mountRef}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      onClick={handleClick}
-    >
+    <div className="hero-simulation-wrapper" ref={mountRef}>
       {/* Whisper-quiet status chip in top-left */}
       <div className="hero-sim-status-chip">
         <span className={`sim-indicator-dot ${isManualMode ? 'sim-indicator-dot-warning' : ''}`} />
@@ -564,11 +606,21 @@ export const HeroDependencySimulation: React.FC = () => {
       </div>
 
       {/* 3D WebGL Canvas */}
-      <div className="sim-canvas-container" style={{ position: 'relative' }}>
+      <div
+        className="sim-canvas-container"
+        ref={canvasContainerRef}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+        onClick={handleClick}
+        onTouchStart={handleTouch}
+        onTouchMove={handleTouch}
+        onTouchEnd={handleTouchEnd}
+        style={{ position: 'relative' }}
+      >
         <canvas ref={canvasRef} className="sim-canvas" />
 
         {/* Crisp HTML Node Labels overlayed accurately onto 3D projected coordinates */}
-        <div className="sim-3d-labels-layer" style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+        <div className="sim-3d-labels-layer">
           {HERO_NODES.map((node) => {
             const pos = screenPositions[node.id]
             if (!pos || !pos.visible) return null
@@ -581,31 +633,24 @@ export const HeroDependencySimulation: React.FC = () => {
             return (
               <div
                 key={node.id}
+                className="sim-node-label"
                 style={{
-                  position: 'absolute',
                   left: `${pos.x}px`,
-                  top: `${pos.y + 26}px`,
-                  transform: 'translate(-50%, 0)',
-                  textAlign: 'center',
-                  transition: 'opacity 0.15s ease',
+                  top: `${pos.y + 24}px`,
                   opacity: hoveredNodeId && hoveredNodeId !== node.id && !isSelect ? 0.35 : 1
                 }}
               >
                 <div
+                  className="sim-node-label-title"
                   style={{
-                    fontSize: '11px',
-                    fontWeight: 600,
                     color: theme === 'dark' ? (isHover || isSelect ? '#FFFFFF' : '#F5F5F2') : (isHover || isSelect ? '#000000' : '#171717'),
-                    whiteSpace: 'nowrap',
-                    letterSpacing: '-0.01em'
                   }}
                 >
                   {node.name}
                 </div>
                 <div
-                  className="mono"
+                  className="sim-node-label-sub mono"
                   style={{
-                    fontSize: '9px',
                     color: isOffline
                       ? (theme === 'dark' ? '#EF4444' : '#B91C1C')
                       : isChanged
@@ -613,7 +658,6 @@ export const HeroDependencySimulation: React.FC = () => {
                       : isHover || isSelect
                       ? (theme === 'dark' ? '#FFFFFF' : '#171717')
                       : (theme === 'dark' ? '#B8B8B3' : '#5F5F5A'),
-                    whiteSpace: 'nowrap'
                   }}
                 >
                   {isOffline ? 'OFFLINE' : isChanged ? '15.4 → 16.1' : node.version || 'v1.0'}
@@ -628,7 +672,7 @@ export const HeroDependencySimulation: React.FC = () => {
           <div
             className="sim-tooltip"
             style={{
-              left: Math.min(mousePosRef.current.x + 14, 340),
+              left: Math.min(Math.max(mousePosRef.current.x + 14, 10), (dimsRef.current.w || 320) - 230),
               top: Math.max(mousePosRef.current.y - 45, 10)
             }}
           >
