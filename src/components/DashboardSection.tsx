@@ -1,8 +1,6 @@
 import React from 'react'
-import { Monitor, Smartphone } from 'lucide-react'
 import { MacBookFrame } from './desktop/MacBookFrame'
-import { DesktopDashboard } from './desktop/DesktopDashboard'
-import { MobileApp } from './mobile/MobileApp'
+import { MacBookVideoPlayer } from './desktop/MacBookVideoPlayer'
 
 export const DashboardSection: React.FC = () => {
   return (
@@ -10,7 +8,7 @@ export const DashboardSection: React.FC = () => {
       <div className="container">
         {/* Section Heading with Adaptive Architecture Message */}
         <div className="section-header">
-          <div className="section-eyebrow mono">PRODUCT PLATFORM · ADAPTIVE ARCHITECTURE</div>
+          <div className="section-eyebrow mono">PRODUCT PLATFORM · LIVE DEMO</div>
           <h2 className="section-title">From change to clarity.</h2>
           <p className="section-subtitle mono text-center">
             SAME PRODUCT. DIFFERENT SCREENS. NO TOGGLE NEEDED.<br />
@@ -20,41 +18,14 @@ export const DashboardSection: React.FC = () => {
           </p>
         </div>
 
-        {/* 1. DESKTOP SHOWCASE (Visible on desktop and laptop >= 1024px) */}
-        <div className="desktop-showcase-container">
-          <div className="showcase-device-badge-wrap">
-            <div className="showcase-device-badge mono">
-              <Monitor size={15} className="badge-icon" />
-              <div className="badge-texts">
-                <span className="badge-title">DESKTOP VIEW (Automatically)</span>
-                <span className="badge-sub">When opened on a PC or larger screen</span>
-              </div>
-            </div>
-          </div>
-
+        {/* MacBook Pro Device Showcase with Live Video & Mute Control */}
+        <div className="macbook-showcase-container">
           <MacBookFrame>
-            <DesktopDashboard />
+            <MacBookVideoPlayer src="/videos/whatbreaks-demo.mp4" />
           </MacBookFrame>
-        </div>
-
-        {/* 2. NATIVE MOBILE DASHBOARD (Automatically active on phones / screens < 1024px) */}
-        <div className="mobile-dashboard-container">
-          <div className="showcase-device-badge-wrap">
-            <div className="showcase-device-badge mono mobile-badge">
-              <Smartphone size={15} className="badge-icon" />
-              <div className="badge-texts">
-                <span className="badge-title">MOBILE VIEW (Automatically)</span>
-                <span className="badge-sub">When opened on a phone or small screen</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Direct Native Mobile Dashboard - No fake device frame on phone */}
-          <div className="mobile-dashboard-standalone panel">
-            <MobileApp />
-          </div>
         </div>
       </div>
     </section>
   )
 }
+

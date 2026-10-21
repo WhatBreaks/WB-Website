@@ -8754,74 +8754,12 @@ pre, code {
 }
 
 /* ======================================================== */
-/* MACBOOK PRO DESKTOP SHOWCASE & AUTOMATIC RESPONSIVE DASH */
+/* MACBOOK PRO SHOWCASE WITH LIVE VIDEO & MUTE CONTROLS     */
 /* ======================================================== */
 
-.desktop-showcase-container {
+.macbook-showcase-container {
   display: block;
   width: 100%;
-}
-
-.mobile-dashboard-container {
-  display: none;
-  width: 100%;
-}
-
-/* Automatic responsive switch: phone & tablet automatically get mobile dashboard */
-@media (max-width: 1023px) {
-  .desktop-showcase-container {
-    display: none !important;
-  }
-  .mobile-dashboard-container {
-    display: block !important;
-    width: 100%;
-    max-width: 100%;
-  }
-}
-
-/* Badges matching reference image */
-.showcase-device-badge-wrap {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 20px;
-}
-
-.showcase-device-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 18px;
-  border-radius: 8px;
-  background: #101013;
-  border: 1px solid #27272a;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
-}
-
-.showcase-device-badge .badge-icon {
-  color: #38bdf8;
-  flex-shrink: 0;
-}
-
-.showcase-device-badge.mobile-badge .badge-icon {
-  color: #10b981;
-}
-
-.badge-texts {
-  display: flex;
-  flex-direction: column;
-  text-align: left;
-}
-
-.badge-title {
-  font-size: 12px;
-  font-weight: 700;
-  color: #ffffff;
-  letter-spacing: 0.04em;
-}
-
-.badge-sub {
-  font-size: 10.5px;
-  color: #71717a;
 }
 
 /* --- Realistic MacBook Pro Laptop Frame --- */
@@ -8897,35 +8835,12 @@ pre, code {
 .macbook-screen-area {
   position: relative;
   width: 100%;
-  height: 590px;
+  aspect-ratio: 16 / 10;
+  max-height: 620px;
   overflow: hidden;
-  background: #09090b;
+  background: #000000;
   border-left: 2px solid #000000;
   border-right: 2px solid #000000;
-}
-
-/* Desktop Dashboard inside MacBook */
-.macbook-screen-area .desktop-dashboard-root {
-  width: 100%;
-  height: 100%;
-  border: none;
-  border-radius: 0;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.macbook-screen-area .dashboard-layout {
-  flex: 1;
-  min-height: 0;
-  height: calc(100% - 44px);
-}
-
-.macbook-screen-area .dashboard-main-view {
-  height: 100%;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
 }
 
 /* Display Lower Chin */
@@ -8988,30 +8903,385 @@ pre, code {
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.9);
 }
 
-/* Native Mobile Dashboard Standalone Container */
-.mobile-dashboard-standalone {
-  width: 100%;
-  max-width: 480px;
-  height: 820px;
-  max-height: 88vh;
-  margin: 0 auto;
-  border-radius: 18px;
-  overflow: hidden;
+/* --- MacBook Video Player Styles --- */
+.macbook-video-container {
   position: relative;
-  border: 1px solid #27272a;
-  background: #09090b;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85);
+  width: 100%;
+  height: 100%;
+  background: #000000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  overflow: hidden;
 }
 
-@media (max-width: 480px) {
-  .mobile-dashboard-standalone {
-    max-width: 100%;
-    height: 85vh;
-    border: none;
-    border-radius: 0;
-    box-shadow: none;
-    background: transparent;
+.macbook-screen-video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #000000;
+  display: block;
+}
+
+/* Floating Mute / Unmute Button (Top-Right of MacBook Screen) */
+.macbook-floating-mute-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 15;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.65);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.macbook-floating-mute-btn.is-muted {
+  background: rgba(18, 18, 22, 0.82);
+  border: 1px solid rgba(244, 63, 94, 0.35);
+  color: #fda4af;
+}
+
+.macbook-floating-mute-btn.is-muted:hover {
+  background: rgba(28, 28, 34, 0.95);
+  border-color: rgba(244, 63, 94, 0.7);
+  color: #fff;
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 6px 24px rgba(244, 63, 94, 0.25);
+}
+
+.macbook-floating-mute-btn.is-unmuted {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.5);
+  color: #34d399;
+}
+
+.macbook-floating-mute-btn.is-unmuted:hover {
+  background: rgba(16, 185, 129, 0.25);
+  border-color: rgba(16, 185, 129, 0.8);
+  color: #fff;
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 6px 24px rgba(16, 185, 129, 0.3);
+}
+
+.mute-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mute-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+/* Pulsing Red Dot for Muted */
+.mute-pulse-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #f43f5e;
+  box-shadow: 0 0 8px #f43f5e;
+  animation: mutePulse 1.8s infinite;
+}
+
+@keyframes mutePulse {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.95);
+    opacity: 0.6;
   }
 }
+
+/* Audio Equalizer Animated Bars for Unmuted */
+.audio-equalizer-dots {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 10px;
+}
+
+.audio-equalizer-dots .dot {
+  width: 2.5px;
+  background: #34d399;
+  border-radius: 1px;
+  animation: eqBar 0.8s ease-in-out infinite alternate;
+}
+
+.audio-equalizer-dots .dot-1 {
+  height: 4px;
+  animation-delay: 0.1s;
+}
+
+.audio-equalizer-dots .dot-2 {
+  height: 9px;
+  animation-delay: 0.35s;
+}
+
+.audio-equalizer-dots .dot-3 {
+  height: 6px;
+  animation-delay: 0.2s;
+}
+
+@keyframes eqBar {
+  0% {
+    height: 3px;
+  }
+  100% {
+    height: 10px;
+  }
+}
+
+/* Center Click Ripple Feedback */
+.video-click-ripple {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 12;
+}
+
+.ripple-circle {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+  animation: ripplePop 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes ripplePop {
+  0% {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+  40% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+/* Bottom Floating Control Bar */
+.macbook-video-control-bar {
+  position: absolute;
+  bottom: 12px;
+  left: 14px;
+  right: 14px;
+  height: 44px;
+  background: rgba(14, 14, 18, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 14;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+}
+
+.macbook-video-control-bar.visible,
+.macbook-video-container:hover .macbook-video-control-bar,
+.macbook-video-container.controls-active .macbook-video-control-bar {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.video-ctrl-btn {
+  background: transparent;
+  border: none;
+  color: #d4d4d8;
+  padding: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.video-ctrl-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.05);
+}
+
+.video-ctrl-btn.active-audio {
+  color: #34d399;
+}
+
+/* Scrubber / Progress Bar */
+.video-scrubber-track {
+  flex: 1;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 9999px;
+  position: relative;
+  cursor: pointer;
+  transition: height 0.15s ease;
+  overflow: visible;
+}
+
+.video-scrubber-track:hover {
+  height: 7px;
+}
+
+.video-scrubber-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #38bdf8 0%, #0284c7 100%);
+  border-radius: 9999px;
+  position: relative;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
+}
+
+.video-scrubber-handle {
+  position: absolute;
+  right: -5px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.8), 0 0 12px #38bdf8;
+  transition: transform 0.15s ease;
+}
+
+.video-scrubber-track:hover .video-scrubber-handle {
+  transform: translateY(-50%) scale(1.25);
+}
+
+.video-timestamp {
+  font-size: 11px;
+  color: #a1a1aa;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.timestamp-divider {
+  color: #52525b;
+}
+
+/* Responsive Scaling for MacBook Frame on Tablets and Mobile Devices */
+@media (max-width: 1023px) {
+  .macbook-device-shell {
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .macbook-showcase-wrapper {
+    padding: 0 4px 20px;
+  }
+
+  .macbook-display-lid {
+    border-radius: 14px 14px 0 0;
+    padding: 6px 7px 0 7px;
+    border-width: 1px;
+  }
+
+  .macbook-top-bezel {
+    height: 10px;
+  }
+
+  .macbook-camera-notch {
+    width: 48px;
+    height: 9px;
+    gap: 4px;
+  }
+
+  .macbook-camera-lens {
+    width: 3.5px;
+    height: 3.5px;
+  }
+
+  .macbook-sensor-dot {
+    width: 2px;
+    height: 2px;
+  }
+
+  .macbook-chin-bar {
+    height: 14px;
+  }
+
+  .macbook-chin-text {
+    font-size: 8px;
+  }
+
+  .macbook-hinge {
+    width: 120px;
+    height: 5px;
+  }
+
+  .macbook-front-lip {
+    height: 12px;
+    border-radius: 0 0 10px 10px;
+  }
+
+  .macbook-thumb-notch {
+    width: 70px;
+    height: 3px;
+  }
+
+  .macbook-floating-mute-btn {
+    top: 8px;
+    right: 8px;
+    padding: 5px 10px;
+    font-size: 9px;
+    gap: 5px;
+  }
+
+  .macbook-video-control-bar {
+    bottom: 8px;
+    left: 8px;
+    right: 8px;
+    height: 36px;
+    padding: 0 10px;
+    gap: 8px;
+  }
+
+  .video-timestamp {
+    font-size: 9.5px;
+  }
+}
+
 
 
