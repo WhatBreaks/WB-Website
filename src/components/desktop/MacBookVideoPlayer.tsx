@@ -3,15 +3,23 @@ import { Volume2, VolumeX, Play, Pause, Maximize2, Minimize2, RotateCcw } from '
 
 interface MacBookVideoPlayerProps {
   src?: string
+  fallback?: React.ReactNode
 }
 
 export const MacBookVideoPlayer: React.FC<MacBookVideoPlayerProps> = ({
-  src = '/videos/whatbreaks-demo.mp4'
+  src,
+  fallback
 }) => {
+  const baseUrl = import.meta.env.BASE_URL || '/'
+  const normalizedBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`
+  const defaultVideoSrc = `${normalizedBase}videos/whatbreaks-demo.mp4`
+  const videoSrc = src || defaultVideoSrc
+
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const containerRef = useRef<HTMLDivElement | null>(null)
   const hideControlsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  const [hasError, setHasError] = useState<boolean>(false)
   const [isMuted, setIsMuted] = useState<boolean>(true)
   const [isPlaying, setIsPlaying] = useState<boolean>(true)
   const [progress, setProgress] = useState<number>(0)
@@ -167,6 +175,11 @@ export const MacBookVideoPlayer: React.FC<MacBookVideoPlayerProps> = ({
     setShowControls(false)
   }
 
+  // If video encountered an unrecoverable load error and a fallback UI is provided, render fallback
+  if (hasError && fallback) {
+    return <>{fallback}</>
+  }
+
   return (
     <div
       ref={containerRef}
@@ -181,18 +194,21 @@ export const MacBookVideoPlayer: React.FC<MacBookVideoPlayerProps> = ({
       {/* Video Element */}
       <video
         ref={videoRef}
-        src={src}
         className="macbook-screen-video"
         playsInline
         autoPlay
         muted
         loop
         preload="auto"
+        onError={() => setHasError(true)}
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
-      />
+      >
+        <source src={videoSrc} type="video/mp4" onError={() => setHasError(true)} />
+        Your browser does not support HTML5 video.
+      </video>
 
       {/* Primary Floating Mute Toggle Badge (Always Visible and Intuitive) */}
       <button

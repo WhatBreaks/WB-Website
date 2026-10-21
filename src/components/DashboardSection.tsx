@@ -1,6 +1,7 @@
 import React from 'react'
 import { MacBookFrame } from './desktop/MacBookFrame'
 import { MacBookVideoPlayer } from './desktop/MacBookVideoPlayer'
+import { DesktopDashboard } from './desktop/DesktopDashboard'
 
 export const DashboardSection: React.FC = () => {
   return (
@@ -21,7 +22,7 @@ export const DashboardSection: React.FC = () => {
         {/* MacBook Pro Device Showcase with Live Video & Mute Control */}
         <div className="macbook-showcase-container">
           <MacBookFrame>
-            <MacBookVideoPlayer src="/videos/whatbreaks-demo.mp4" />
+            <MacBookVideoPlayer fallback={<DesktopDashboard />} />
           </MacBookFrame>
         </div>
       </div>
