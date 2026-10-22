@@ -580,7 +580,8 @@ export const HeroDependencySimulation: React.FC = () => {
   }
 
   const activeNode = selectedNodeId ? nodesMap.get(selectedNodeId) : (hoveredNodeId ? nodesMap.get(hoveredNodeId) : null)
-
+  const hoveredNode = hoveredNodeId ? nodesMap.get(hoveredNodeId) : null;
+  
   return (
     <div className="hero-simulation-wrapper" ref={mountRef}>
       {/* Whisper-quiet status chip in top-left */}
@@ -668,7 +669,7 @@ export const HeroDependencySimulation: React.FC = () => {
         </div>
 
         {/* Small clean hover tooltip */}
-        {hoveredNodeId && activeNode && mousePosRef.current && (
+        {hoveredNodeId && hoveredNode && mousePosRef.current && (
           <div
             className="sim-tooltip"
             style={{
@@ -676,15 +677,15 @@ export const HeroDependencySimulation: React.FC = () => {
               top: Math.max(mousePosRef.current.y - 45, 10)
             }}
           >
-            <div className="sim-tooltip-name">{activeNode.name.toUpperCase()}</div>
-            <div className="sim-tooltip-sub mono text-muted">{activeNode.version || 'v1.0'}</div>
+            <div className="sim-tooltip-name">{hoveredNode.name.toUpperCase()}</div>
+            <div className="sim-tooltip-sub mono text-muted">{hoveredNode.version || 'v1.0'}</div>
             <div className="sim-tooltip-row">
               <span className="text-muted">Type</span>
-              <span className="mono">{activeNode.type}</span>
+              <span className="mono">{hoveredNode.type}</span>
             </div>
             <div className="sim-tooltip-row">
               <span className="text-muted">Direct dependents</span>
-              <span className="mono">{activeNode.directDependentsCount}</span>
+              <span className="mono">{hoveredNode.directDependentsCount}</span>
             </div>
           </div>
         )}
