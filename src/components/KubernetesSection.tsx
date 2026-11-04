@@ -14,11 +14,6 @@ export const KubernetesSection: React.FC = () => {
     { name: 'StatefulSet', type: 'apps/v1/StatefulSet', desc: 'Persistent volume PostgreSQL state' }
   ]
 
-  const scrollToDashboard = () => {
-    const el = document.getElementById('dashboard')
-    if (el) el.scrollIntoView({ behavior: 'smooth' })
-  }
-
   return (
     <section className="kubernetes-section" id="kubernetes">
       <div className="container">
@@ -74,14 +69,15 @@ export const KubernetesSection: React.FC = () => {
             </div>
 
             <div className="k8s-cta-row">
-              <button
-                type="button"
+              <a
+                href="https://github.com/aaradhychinche-alt/WhatBreaks"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="btn btn-primary"
-                onClick={scrollToDashboard}
               >
                 <span>Try WhatBreaks on Kubernetes</span>
                 <ArrowRight size={14} />
-              </button>
+              </a>
             </div>
           </div>
 
