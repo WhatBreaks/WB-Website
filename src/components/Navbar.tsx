@@ -82,14 +82,15 @@ export const Navbar: React.FC = () => {
             {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
           </button>
 
-          <button
-            type="button"
+          <a
+            href="https://github.com/aaradhychinche-alt/WhatBreaks"
+            target="_blank"
+            rel="noopener noreferrer"
             className="btn btn-primary btn-sm"
-            onClick={() => scrollToSection('kubernetes')}
           >
             <span>Try WhatBreaks</span>
             <ArrowRight size={14} />
-          </button>
+          </a>
         </div>
 
         {/* Mobile controls: Theme toggle + Hamburger */}
@@ -162,15 +163,17 @@ export const Navbar: React.FC = () => {
               {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
               <span>{theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}</span>
             </button>
-            <button
-              type="button"
+            <a
+              href="https://github.com/aaradhychinche-alt/WhatBreaks"
+              target="_blank"
+              rel="noopener noreferrer"
               className="btn btn-primary"
               style={{ width: '100%', minHeight: '44px' }}
-              onClick={() => scrollToSection('dashboard')}
+              onClick={() => setMobileMenuOpen(false)}
             >
               <span>Try WhatBreaks</span>
               <ArrowRight size={14} />
-            </button>
+            </a>
           </div>
         </div>
       )}

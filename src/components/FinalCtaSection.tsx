@@ -2,13 +2,6 @@ import React from 'react'
 import { ArrowRight, ExternalLink } from 'lucide-react'
 
 export const FinalCtaSection: React.FC = () => {
-  const scrollToDashboard = () => {
-    const el = document.getElementById('dashboard')
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' })
-    }
-  }
-
   return (
     <section className="final-cta-section">
       <div className="container">
@@ -24,14 +17,15 @@ export const FinalCtaSection: React.FC = () => {
           </p>
 
           <div className="final-cta-actions">
-            <button
-              type="button"
+            <a
+              href="https://github.com/aaradhychinche-alt/WhatBreaks"
+              target="_blank"
+              rel="noopener noreferrer"
               className="btn btn-primary"
-              onClick={scrollToDashboard}
             >
               <span>Try WhatBreaks</span>
               <ArrowRight size={15} />
-            </button>
+            </a>
 
             <a
               href="https://github.com/aaradhychinche-alt/WhatBreaks"
