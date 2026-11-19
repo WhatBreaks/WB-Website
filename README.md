@@ -1,3 +1,12 @@
+> **Branch note (`feat/break-the-page`):** This branch replaces the site entry point with the
+> **BREAK THE PAGE** static build of the WhatBreaks website (scroll-driven concept: the page
+> literally breaks itself as you scroll, then replays the incident in 3D). Everything it needs is
+> static: `index.html` + `assets/` (styles, choreography engine, Three.js replay, fonts, embedded
+> V1 dashboard demo). No build step required. Preview locally with any static server from the repo
+> root, e.g. `npx serve .` or `python3 -m http.server`, then open `/index.html`.
+> The original Vite/React scaffold (`src/`, `package.json`, etc.) is left untouched in this PR;
+> removing it is a follow-up once this direction is approved.
+
 # WhatBreaks
 
 > **Know what breaks before you change it.**  
