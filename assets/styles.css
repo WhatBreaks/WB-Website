@@ -324,3 +324,7 @@ body.demo-locked{overflow:hidden}
   .crashlog.shudder .cl-word{animation:none}
   html{scroll-behavior:auto}
 }
+
+/* header logo */
+.wordmark{display:inline-flex;align-items:center;gap:10px}
+.wm-logo{width:24px;height:24px;flex-shrink:0;display:block}
